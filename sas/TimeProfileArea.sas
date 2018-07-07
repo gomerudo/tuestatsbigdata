@@ -35,12 +35,11 @@ Liver disease: might change with time
 /** This is the best model we found for hand1.**/
 proc mixed data=DPSubdata method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
-	ALC(REF="0") INJ(REF="0") 
+	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX SMOKE ALC INJ EPI LIV 
-	SMOKE*NORMONTH ALC*NORMONTH INJ*NORMONTH 
-	EPI*NORMONTH LIV*NORMONT /solution ddfm=satterthwaite;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	model AREA=CAGE NORMONTH SEX 
+	 /solution ddfm=satterthwaite;
+	 RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
