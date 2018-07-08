@@ -33,49 +33,16 @@ Liver disease: might change with time
 **/
 
 /** This is the best model we found for hand1.**/
-proc mixed data=DPSubdata method=reml;
+proc mixed data=DATAHAND1 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX 
+	model AREA=CAGE MONTH SEX 
 	 /solution ddfm=satterthwaite;
-	 RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	 RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
-
-
-/** We can run the same model for hand2.**/
-proc import datafile="/folders/myfolders/dp_hand2_8fu.csv"
-     out=RAWDATAHAND2
-     dbms=csv
-     replace;
-run;
-
-proc sort data=RAWDATAHAND2;                                                                                                                    
-   by ID FU;                
-run;                                                                                                                                    
-
-
-DATA DATAHAND2;
-	SET RAWDATAHAND2;
-	IF FU > 7 	
-	THEN DELETE;
-RUN;
-
-
-/** THE BEST MODEL FOR HAND TWO IS GIVEN BY **/
-proc mixed data=SubDataHand2 method=reml;
-	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
-	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
-	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX 
-	 /solution ddfm=satterthwaite;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
-	repeated FU/subject=ID type=ar(1) rcorr;
-	ods output covparms=COV rcorr=CORR;
-run;
-
 
 /** Let's take a look at the residuals and construct the models **/
 /** residuals for first model **/
@@ -83,9 +50,9 @@ proc mixed data=DATAHAND1 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX  
+	model AREA=CAGE MONTH SEX  
     /solution ddfm=satterthwaite OUTP=PREDHAND1;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
@@ -108,10 +75,10 @@ proc mixed data=DATAHAND1 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX  
+	model AREA=CAGE MONTH SEX  
     /solution ddfm=satterthwaite 	
     RESIDUAL INFLUENCE(ITER=5 EFFECT=ID EST);
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
@@ -131,9 +98,9 @@ proc mixed data=NOINFLUENTIALHAND1 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX  
+	model AREA=CAGE MONTH SEX  
     /solution ddfm=satterthwaite OUTP=PRED2HAND1;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
@@ -151,14 +118,46 @@ Anderson-Darling 	A-Sq 	21.36484 	Pr > A-Sq 	<0.0050
 **/
 
 
+/** We can run the same model for hand2.**/
+proc import datafile="/folders/myfolders/dp_hand2_8fu.csv"
+     out=RAWDATAHAND2
+     dbms=csv
+     replace;
+run;
+
+proc sort data=RAWDATAHAND2;                                                                                                                    
+   by ID FU;                
+run;                                                                                                                                    
+
+
+DATA DATAHAND2;
+	SET RAWDATAHAND2;
+	IF FU > 7 	
+	THEN DELETE;
+RUN;
+
+
+/** THE BEST MODEL FOR HAND TWO IS GIVEN BY **/
+proc mixed data=DATAHAND2 method=reml;
+	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
+	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
+	EPI(REF="0") LIV(REF="0");
+	model AREA=CAGE MONTH SEX 
+	 /solution ddfm=satterthwaite;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
+	repeated FU/subject=ID type=ar(1) rcorr;
+	ods output covparms=COV rcorr=CORR;
+run;
+
+
 /** residuals for second model **/
 proc mixed data=DATAHAND2 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX 
+	model AREA=CAGE MONTH SEX 
 	 /solution ddfm=satterthwaite outp=PREDHAND2;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
@@ -179,10 +178,10 @@ proc mixed data=DATAHAND2 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX  
+	model AREA=CAGE MONTH SEX  
     /solution ddfm=satterthwaite 	
     RESIDUAL INFLUENCE(ITER=5 EFFECT=ID EST);
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
@@ -199,9 +198,9 @@ proc mixed data=NOINFLUENTIALHAND2 method=reml;
 	class ID SEX(REF="0") FU(REF="0") CAGE(REF="0") SMOKE(REF="0")
 	ALC(REF="0") INJ(REF="0") REL(REF="0") DIA(REF="0") 
 	EPI(REF="0") LIV(REF="0");
-	model AREA=CAGE NORMONTH SEX  
+	model AREA=CAGE MONTH SEX  
     /solution ddfm=satterthwaite OUTP=PRED2HAND2;
-	RANDOM INT NORMONTH /TYPE=UN SUBJECT=ID G V;
+	RANDOM INT MONTH /TYPE=UN SUBJECT=ID G V;
 	repeated FU/subject=ID type=ar(1) rcorr;
 	ods output covparms=COV rcorr=CORR;
 run;
