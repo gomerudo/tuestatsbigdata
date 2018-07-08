@@ -4,15 +4,19 @@ library(dplyr)
 #library(rio)
 
 
-setwd("/home/jorge/Documents/master/sixth-quartile/statistics-big-data")
+setwd("/home/jorge/Documents/master/sixth-quartile/statistics-big-data/rcode/")
 
-dupuytrenData = read.sas7bdat("rcode/assignment_dd.sas7bdat")
+dupuytrenData = read.sas7bdat("assignment_dd.sas7bdat")
+
+summary(dupuytrenData$AGE0)
 
 #
 dupuytrenData$AGE <- dupuytrenData$AGE0 + dupuytrenData$MONTH/12;
 dupuytrenData$CAGE <- 0;
-dupuytrenData$CAGE[dupuytrenData$AGE0 > 50] <- 1;
-dupuytrenData$CAGE[dupuytrenData$AGE0 > 70] <- 2;
+
+dupuytrenData$CAGE[dupuytrenData$AGE0 > 59] <- 1;
+dupuytrenData$CAGE[dupuytrenData$AGE0 > 65] <- 2;
+dupuytrenData$CAGE[dupuytrenData$AGE0 > 72] <- 3;
 
 
 
