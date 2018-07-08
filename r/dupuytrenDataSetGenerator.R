@@ -1,20 +1,20 @@
 library(sas7bdat)
 library(dplyr)
-library(foreign)
-library(rio)
+#library(foreign)
+#library(rio)
 
-#install.packages("sas7bdat")
-#install.packages("dplyr")
-#install.packages("foreign")
-#install.packages("rio")
-#install.packages("curl")
-#install.packages("openxlsx")
 
 setwd("/home/jorge/Documents/master/sixth-quartile/statistics-big-data")
 
 dupuytrenData = read.sas7bdat("rcode/assignment_dd.sas7bdat")
 
-dupuytrenData$AGE <- dupuytrenData$AGE0 + dupuytrenData$MONTH/12
+#
+dupuytrenData$AGE <- dupuytrenData$AGE0 + dupuytrenData$MONTH/12;
+dupuytrenData$CAGE <- 0;
+dupuytrenData$CAGE[dupuytrenData$AGE0 > 50] <- 1;
+dupuytrenData$CAGE[dupuytrenData$AGE0 > 70] <- 2;
+
+
 
 length(unique(dupuytrenData$ID))
 
@@ -25,93 +25,57 @@ table_df = as.data.frame.matrix(table(dupuytrenData$ID, dupuytrenData$Hand))
 df_hand1 = subset(dupuytrenData, Hand == 0)
 df_hand2 = subset(dupuytrenData, Hand == 1)
 
-valid_subjects <- vector(mode="numeric", length=0)
-valid_consistent_subjects = vector(mode="numeric", length=0)
-subjects = unique(dupuytrenData$ID)
-
-fu_threshold = 9;
-for (subject in subjects){
-  fu_counter = 0;
+fu_threshold = 8;
+valid_subjects_hand1 = vector(mode="numeric", length=0)
+subject_ids_hand1 = unique(df_hand1$ID)
+for (subject in subject_ids_hand1){
   fus_hand1 = df_hand1[df_hand1$ID == subject, ]$FU
+  add_subject_hand = TRUE;
+  fu_counter = 0;
+  while (fu_counter < fu_threshold){
+    if (!is.element(fu_counter, fus_hand1)){
+      add_subject_hand = FALSE;
+      break;
+    }
+    fu_counter = fu_counter + 1;
+  }
+
+  if (add_subject_hand){
+    valid_subjects_hand1 <- c(valid_subjects_hand1, subject)
+  }
+}
+length(valid_subjects_hand1)
+
+valid_subjects_hand2 = vector(mode="numeric", length=0)
+subject_ids_hand2 = unique(df_hand2$ID)
+for (subject in subject_ids_hand2){
   fus_hand2 = df_hand2[df_hand2$ID == subject, ]$FU
-  add_subject = TRUE;
-  if (length(fus_hand1) == length(fus_hand2)){
-    for (fu in fus_hand1){
-      if (!is.element(fu, fus_hand2)){
-        add_subject = FALSE;
-        break;
-      }
-      fu_counter = fu_counter + 1;
-    }
-  } else {
-    add_subject = FALSE;
-  }
-    
-  if (add_subject){
-    valid_subjects <- c(valid_subjects, subject)
-    if (fu_counter >= fu_threshold){
-      valid_consistent_subjects <- c(valid_consistent_subjects, subject)
-    }
-  }
-}
-
-length(valid_subjects)
-dupuytrenBothHands = dupuytrenData[dupuytrenData$ID %in% valid_subjects, ]
-length(valid_consistent_subjects)
-dupuytrenBothHandsConsistent = dupuytrenData[dupuytrenData$ID %in% valid_consistent_subjects, ]
-
-write.csv(dupuytrenBothHands, "dp_both_hands.csv")
-write.csv(dupuytrenBothHandsConsistent, "dp_both_hands_9fu.csv")
-
-avoid_hand1 <- df_hand1[!complete.cases(df_hand1), ]$ID
-
-#df_hand1 <- na.omit(df_hand1)
-valid_consistent_subjects_hand1 = vector(mode="numeric", length=0)
-subjects = unique(df_hand1$ID)
-
-fu_threshold = 9;
-for (subject in subjects){
+  add_subject_hand = TRUE;
   fu_counter = 0;
-  fus_hand1 = df_hand1[df_hand1$ID == subject, ]$FU
-  if (length(fus_hand1) >= fu_threshold && !(subject %in% avoid_hand1)){
-    valid_consistent_subjects_hand1 <- c(valid_consistent_subjects_hand1, subject)
+  while (fu_counter < fu_threshold){
+    if (!is.element(fu_counter, fus_hand2)){
+      add_subject_hand = FALSE;
+      break;
+    }
+    fu_counter = fu_counter + 1;
+  }
+  
+  if (add_subject_hand){
+    valid_subjects_hand2 <- c(valid_subjects_hand2, subject)
   }
 }
+length(valid_subjects_hand2)
 
-length(valid_consistent_subjects_hand1)
-dupuytrenHand1Consistent = df_hand1[df_hand1$ID %in% valid_consistent_subjects_hand1, ]
-
-write.csv(df_hand1, "dp_hand1.csv")
-write.csv(dupuytrenHand1Consistent, "dp_hand1_9fu.csv")
-
-#dupuytrenHand1Consistent[dupuytrenHand1Consistent$ID == 85, ]
-
-#m1 <- unique(dupuytrenHand1Consistent[dupuytrenHand1Consistent$ID == 145, ]$ID)
+dupuytrenHand1 = df_hand1[df_hand1$ID %in% valid_subjects_hand1, ]
+dupuytrenHand2 = df_hand2[df_hand2$ID %in% valid_subjects_hand2, ]
 
 
-write.csv(df_hand2, "dp_hand2.csv")
+## month normalization
+dupuytrenHand1$NORMONTH <- dupuytrenHand1$MONTH/6;
+dupuytrenHand2$NORMONTH <- dupuytrenHand2$MONTH/6;
 
+write.csv(dupuytrenHand1, "dp_hand1_8fu.csv")
+write.csv(dupuytrenHand2, "dp_hand2_8fu.csv")
 
-hist(df_hand1$AREA)
-hist(df_hand2$AREA)
-hist(dupuytrenBothHands$AREA)
-
-hist(dupuytrenBothHands$MONTH)
-hist(dupuytrenBothHands$AGE0)
-
-df_hands = dupuytrenBothHands[c("ID", "Hand", "AREA")]
-dfh0 = df_hands[df_hands$Hand == 0, ]
-dfh1 = df_hands[df_hands$Hand == 1, ]
-#dfh = merge(dfh0, dfh1, by="ID")
-cor(dfh0$AREA, dfh1$AREA)
-
-summary(dupuytrenBothHands)
-table(dupuytrenBothHands$ID, dupuytrenBothHands$Hand)
-count(dupuytrenBothHands, "FU")
-
-dupuytrenBothHands %>% count(FU)
-hist(dupuytrenBothHands$FU,
-     breaks=12,
-     xlab="Follow up", 
-     main="Histogram of follow ups for both hands")
+hist(dupuytrenHand1$AREA, xlab="AREA", main="AREA for subjects with measurements in hand 1")
 
